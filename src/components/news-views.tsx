@@ -44,9 +44,9 @@ export function NewsViews({
   viewType,
   cardSize,
   cardPreview,
-  wrapProperties = false,
+  wrapProperties: _wrapProperties = false,
   groupBy,
-  colorColumns = false,
+  colorColumns: _colorColumns = false,
   showIcons
 }: NewsViewsProps) {
   
