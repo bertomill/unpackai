@@ -1,37 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Mock user preferences - replace with real database
-const mockPreferences = {
-  '1': {
-    userId: '1',
-    preferredCategories: ['AI Research', 'AI Development', 'Enterprise AI'],
-    followedEntities: ['OpenAI', 'Google', 'Microsoft', 'Anthropic', 'Tesla'],
-    trustedSources: ['TechCrunch', 'The Verge', 'ZDNet', 'AI News'],
-    customSources: [
-      'https://blog.openai.com/rss.xml',
-      'https://www.anthropic.com/news/rss'
-    ],
-    notificationSettings: {
-      email: true,
-      push: true,
-      frequency: 'daily',
-      breakingNews: true
-    },
-    minRelevanceScore: 6,
-    customCategories: {
-      'AI Research': 'Research & Development',
-      'AI Development': 'Product Updates',
-      'Enterprise AI': 'Business Applications'
-    }
-  }
-}
+import { verifyToken } from '@/lib/auth'
+import { getUserPreferences, updateUserPreferences } from '@/lib/user-db'
 
 export async function GET(request: NextRequest) {
   try {
-    // In a real app, get user ID from JWT token
-    const userId = request.headers.get('x-user-id') || '1'
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authorization token required' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.substring(7)
+    const payload = await verifyToken(token)
     
-    const preferences = mockPreferences[userId as keyof typeof mockPreferences]
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    const userId = parseInt(payload.userId)
+    const preferences = await getUserPreferences(userId)
     
     if (!preferences) {
       return NextResponse.json(
@@ -56,16 +49,36 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id') || '1'
+    // Get token from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authorization token required' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.substring(7)
+    const payload = await verifyToken(token)
+    
+    if (!payload) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    const userId = parseInt(payload.userId)
     const updates = await request.json()
 
-    // In a real app, update the database
-    if (mockPreferences[userId as keyof typeof mockPreferences]) {
-      mockPreferences[userId as keyof typeof mockPreferences] = {
-        ...mockPreferences[userId as keyof typeof mockPreferences],
-        ...updates,
-        updatedAt: new Date().toISOString()
-      }
+    // Update preferences in database
+    const updatedPreferences = await updateUserPreferences(userId, updates)
+
+    if (!updatedPreferences) {
+      return NextResponse.json(
+        { error: 'Failed to update preferences' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({
