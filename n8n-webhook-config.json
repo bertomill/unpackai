@@ -1,0 +1,154 @@
+{
+  "name": "AI News Aggregator Webhook",
+  "description": "Webhook configuration for UnpackAI news aggregation",
+  "version": "1.0.0",
+  "webhook": {
+    "url": "https://your-domain.com/api/news",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer your-api-key"
+    }
+  },
+  "workflow": {
+    "name": "AI News Collection Workflow",
+    "description": "Automated workflow to collect and process AI news from multiple sources",
+    "nodes": [
+      {
+        "name": "Trigger",
+        "type": "Schedule Trigger",
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "value": 2
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "TechCrunch RSS",
+        "type": "RSS Feed Read",
+        "parameters": {
+          "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+          "options": {
+            "maxItems": 10
+          }
+        }
+      },
+      {
+        "name": "The Verge RSS",
+        "type": "RSS Feed Read",
+        "parameters": {
+          "url": "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
+          "options": {
+            "maxItems": 10
+          }
+        }
+      },
+      {
+        "name": "AI News Processing",
+        "type": "Code",
+        "parameters": {
+          "language": "javascript",
+          "code": "// Process and filter AI news articles\nconst items = $input.all();\nconst processedArticles = [];\n\nfor (const item of items) {\n  const data = item.json;\n  \n  // Filter for AI-related content\n  if (data.title && (\n    data.title.toLowerCase().includes('ai') ||\n    data.title.toLowerCase().includes('artificial intelligence') ||\n    data.title.toLowerCase().includes('machine learning') ||\n    data.title.toLowerCase().includes('openai') ||\n    data.title.toLowerCase().includes('chatgpt') ||\n    data.title.toLowerCase().includes('gpt') ||\n    data.title.toLowerCase().includes('claude') ||\n    data.title.toLowerCase().includes('gemini')\n  )) {\n    processedArticles.push({\n      title: data.title,\n      excerpt: data.description || data.summary || '',\n      content: data.content || data.description || '',\n      source: data.link ? new URL(data.link).hostname : 'Unknown',\n      url: data.link,\n      timestamp: new Date().toISOString(),\n      category: 'AI News',\n      readTime: Math.ceil((data.content || data.description || '').split(' ').length / 200) + ' min read',\n      trending: Math.random() > 0.7, // Random trending for demo\n      image: data.enclosure?.url || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=400&h=300&fit=crop',\n      tags: ['AI', 'Artificial Intelligence', 'Technology']\n    });\n  }\n}\n\nreturn processedArticles.map(article => ({ json: article }));"
+        }
+      },
+      {
+        "name": "Send to UnpackAI",
+        "type": "HTTP Request",
+        "parameters": {
+          "method": "POST",
+          "url": "https://your-domain.com/api/news",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "articles": "={{ $json }}",
+            "source": "N8n Workflow",
+            "timestamp": "={{ new Date().toISOString() }}"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Trigger": {
+        "main": [
+          [
+            {
+              "node": "TechCrunch RSS",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "The Verge RSS",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "TechCrunch RSS": {
+        "main": [
+          [
+            {
+              "node": "AI News Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "The Verge RSS": {
+        "main": [
+          [
+            {
+              "node": "AI News Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI News Processing": {
+        "main": [
+          [
+            {
+              "node": "Send to UnpackAI",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "instructions": {
+    "setup": [
+      "1. Import this configuration into your N8n instance",
+      "2. Update the webhook URL to match your deployed UnpackAI domain",
+      "3. Configure additional RSS feeds or news sources as needed",
+      "4. Set up authentication if required",
+      "5. Test the workflow manually before enabling the schedule",
+      "6. Monitor the webhook endpoint for incoming data"
+    ],
+    "customization": [
+      "Add more RSS feeds from AI news sources",
+      "Implement content filtering and categorization logic",
+      "Add sentiment analysis for news articles",
+      "Set up notifications for breaking AI news",
+      "Implement duplicate detection and removal",
+      "Add article summarization using AI services"
+    ]
+  },
+  "sources": [
+    "https://techcrunch.com/category/artificial-intelligence/feed/",
+    "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
+    "https://feeds.feedburner.com/venturebeat/SZYF",
+    "https://www.artificialintelligence-news.com/feed/",
+    "https://openai.com/blog/rss.xml",
+    "https://www.anthropic.com/news/rss"
+  ]
+}

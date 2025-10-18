@@ -1,0 +1,328 @@
+{
+  "name": "Enhanced AI News Aggregator - Multi-User",
+  "description": "Production-ready workflow with user personalization and advanced content processing",
+  "version": "2.0.0",
+  "features": [
+    "Multi-user support",
+    "Personalized content delivery",
+    "AI-powered content processing",
+    "User preference management",
+    "Advanced filtering and categorization",
+    "Duplicate detection",
+    "Content quality scoring"
+  ],
+  "workflow": {
+    "name": "AI News Collection & Personalization Workflow",
+    "description": "Advanced workflow for personalized AI news aggregation",
+    "nodes": [
+      {
+        "name": "Trigger",
+        "type": "Schedule Trigger",
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "minutes",
+                "value": 15
+              }
+            ]
+          }
+        },
+        "notes": "Runs every 15 minutes for more real-time updates"
+      },
+      {
+        "name": "Get User Preferences",
+        "type": "HTTP Request",
+        "parameters": {
+          "method": "GET",
+          "url": "https://your-domain.com/api/users/preferences",
+          "headers": {
+            "Authorization": "Bearer {{$env.N8N_API_KEY}}"
+          }
+        },
+        "notes": "Fetches user preferences and custom news sources"
+      },
+      {
+        "name": "RSS Source Collection",
+        "type": "Code",
+        "parameters": {
+          "language": "javascript",
+          "code": "// Dynamic RSS source collection based on user preferences\nconst userPreferences = $input.first().json;\nconst defaultSources = [\n  'https://techcrunch.com/category/artificial-intelligence/feed/',\n  'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml',\n  'https://feeds.feedburner.com/venturebeat/SZYF',\n  'https://www.artificialintelligence-news.com/feed/',\n  'https://openai.com/blog/rss.xml',\n  'https://www.anthropic.com/news/rss',\n  'https://blog.google/technology/ai/',\n  'https://blogs.microsoft.com/ai/feed/',\n  'https://ai.facebook.com/blog/rss.xml'\n];\n\n// Combine default sources with user custom sources\nconst allSources = [...defaultSources, ...(userPreferences.customSources || [])];\n\nreturn allSources.map(source => ({ json: { url: source, userIds: userPreferences.userIds } }));"
+        },
+        "notes": "Dynamically collects RSS sources based on user preferences"
+      },
+      {
+        "name": "RSS Feed Reader",
+        "type": "RSS Feed Read",
+        "parameters": {
+          "url": "={{$json.url}}",
+          "options": {
+            "maxItems": 20
+          }
+        },
+        "notes": "Reads each RSS feed with increased item limit"
+      },
+      {
+        "name": "AI Content Processing",
+        "type": "OpenAI",
+        "parameters": {
+          "resource": "chat",
+          "operation": "create",
+          "model": "gpt-4",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are an AI content processor for news articles. Analyze each article and extract: 1) Main topic/category, 2) Key entities (companies, people, technologies), 3) Sentiment (positive/negative/neutral), 4) Quality score (1-10), 5) Summary (2-3 sentences), 6) Relevance to AI/tech (1-10). Return as JSON."
+            },
+            {
+              "role": "user",
+              "content": "Article: {{$json.title}} - {{$json.description}}"
+            }
+          ],
+          "temperature": 0.3
+        },
+        "notes": "AI-powered content analysis and categorization"
+      },
+      {
+        "name": "Content Quality Filter",
+        "type": "Code",
+        "parameters": {
+          "language": "javascript",
+          "code": "// Filter articles based on quality and relevance\nconst article = $input.first().json;\nconst aiAnalysis = JSON.parse(article.choices[0].message.content);\n\n// Only process high-quality, relevant articles\nif (aiAnalysis.qualityScore >= 6 && aiAnalysis.relevanceScore >= 7) {\n  return [{\n    json: {\n      ...article,\n      aiAnalysis,\n      processedAt: new Date().toISOString(),\n      qualityScore: aiAnalysis.qualityScore,\n      relevanceScore: aiAnalysis.relevanceScore,\n      category: aiAnalysis.category,\n      summary: aiAnalysis.summary,\n      sentiment: aiAnalysis.sentiment,\n      entities: aiAnalysis.entities\n    }\n  }];\n}\n\nreturn [];"
+        },
+        "notes": "Filters out low-quality or irrelevant content"
+      },
+      {
+        "name": "Duplicate Detection",
+        "type": "HTTP Request",
+        "parameters": {
+          "method": "POST",
+          "url": "https://your-domain.com/api/articles/check-duplicate",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{$env.N8N_API_KEY}}"
+          },
+          "body": {
+            "title": "={{$json.title}}",
+            "url": "={{$json.link}}",
+            "contentHash": "={{$json.contentHash}}"
+          }
+        },
+        "notes": "Checks for duplicate articles using content hashing"
+      },
+      {
+        "name": "User Personalization Engine",
+        "type": "Code",
+        "parameters": {
+          "language": "javascript",
+          "code": "// Personalize content for each user based on their preferences\nconst article = $input.first().json;\nconst userPreferences = $input.all().find(item => item.json.userPreferences);\n\nif (!userPreferences) return [];\n\nconst personalizedArticles = userPreferences.json.userPreferences.map(userPref => {\n  const userScore = calculatePersonalizationScore(article, userPref);\n  \n  return {\n    json: {\n      ...article,\n      userId: userPref.userId,\n      personalizationScore: userScore,\n      isRelevant: userScore >= userPref.minRelevanceScore || false,\n      customCategory: userPref.customCategories[article.aiAnalysis.category] || article.aiAnalysis.category\n    }\n  };\n}).filter(item => item.json.isRelevant);\n\nfunction calculatePersonalizationScore(article, userPref) {\n  let score = 0;\n  \n  // Category preference scoring\n  if (userPref.preferredCategories.includes(article.aiAnalysis.category)) {\n    score += 3;\n  }\n  \n  // Entity preference scoring\n  article.aiAnalysis.entities.forEach(entity => {\n    if (userPref.followedEntities.includes(entity)) {\n      score += 2;\n    }\n  });\n  \n  // Sentiment preference\n  if (userPref.preferredSentiment === article.aiAnalysis.sentiment) {\n    score += 1;\n  }\n  \n  // Source preference\n  if (userPref.trustedSources.includes(article.source)) {\n    score += 2;\n  }\n  \n  return Math.min(score, 10);\n}\n\nreturn personalizedArticles;"
+        },
+        "notes": "Personalizes content for each user based on their preferences"
+      },
+      {
+        "name": "Store Articles",
+        "type": "HTTP Request",
+        "parameters": {
+          "method": "POST",
+          "url": "https://your-domain.com/api/articles",
+          "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer {{$env.N8N_API_KEY}}"
+          },
+          "body": "={{$json}}"
+        },
+        "notes": "Stores processed and personalized articles in database"
+      },
+      {
+        "name": "Send Notifications",
+        "type": "Code",
+        "parameters": {
+          "language": "javascript",
+          "code": "// Send push notifications for high-priority articles\nconst articles = $input.all();\nconst highPriorityArticles = articles.filter(article => \n  article.json.personalizationScore >= 8 && \n  article.json.qualityScore >= 8\n);\n\nif (highPriorityArticles.length > 0) {\n  // Send to notification service\n  return highPriorityArticles.map(article => ({\n    json: {\n      userId: article.json.userId,\n      title: `Breaking: ${article.json.title}`,\n      body: article.json.summary,\n      data: {\n        articleId: article.json.id,\n        category: article.json.category\n      }\n    }\n  }));\n}\n\nreturn [];"
+        },
+        "notes": "Sends push notifications for high-priority personalized articles"
+      }
+    ],
+    "connections": {
+      "Trigger": {
+        "main": [
+          [
+            {
+              "node": "Get User Preferences",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get User Preferences": {
+        "main": [
+          [
+            {
+              "node": "RSS Source Collection",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RSS Source Collection": {
+        "main": [
+          [
+            {
+              "node": "RSS Feed Reader",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "RSS Feed Reader": {
+        "main": [
+          [
+            {
+              "node": "AI Content Processing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Content Processing": {
+        "main": [
+          [
+            {
+              "node": "Content Quality Filter",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Content Quality Filter": {
+        "main": [
+          [
+            {
+              "node": "Duplicate Detection",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Duplicate Detection": {
+        "main": [
+          [
+            {
+              "node": "User Personalization Engine",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "User Personalization Engine": {
+        "main": [
+          [
+            {
+              "node": "Store Articles",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Store Articles": {
+        "main": [
+          [
+            {
+              "node": "Send Notifications",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    }
+  },
+  "database_schema": {
+    "users": {
+      "id": "UUID (Primary Key)",
+      "email": "VARCHAR(255) UNIQUE",
+      "name": "VARCHAR(255)",
+      "avatar_url": "TEXT",
+      "created_at": "TIMESTAMP",
+      "updated_at": "TIMESTAMP"
+    },
+    "user_preferences": {
+      "id": "UUID (Primary Key)",
+      "user_id": "UUID (Foreign Key)",
+      "preferred_categories": "JSON",
+      "followed_entities": "JSON",
+      "trusted_sources": "JSON",
+      "custom_sources": "JSON",
+      "notification_settings": "JSON",
+      "min_relevance_score": "INTEGER DEFAULT 5",
+      "created_at": "TIMESTAMP",
+      "updated_at": "TIMESTAMP"
+    },
+    "articles": {
+      "id": "UUID (Primary Key)",
+      "title": "TEXT",
+      "excerpt": "TEXT",
+      "content": "TEXT",
+      "url": "TEXT UNIQUE",
+      "source": "VARCHAR(255)",
+      "image_url": "TEXT",
+      "category": "VARCHAR(100)",
+      "ai_analysis": "JSON",
+      "quality_score": "INTEGER",
+      "relevance_score": "INTEGER",
+      "content_hash": "VARCHAR(255)",
+      "published_at": "TIMESTAMP",
+      "created_at": "TIMESTAMP"
+    },
+    "user_articles": {
+      "id": "UUID (Primary Key)",
+      "user_id": "UUID (Foreign Key)",
+      "article_id": "UUID (Foreign Key)",
+      "personalization_score": "INTEGER",
+      "is_read": "BOOLEAN DEFAULT FALSE",
+      "is_bookmarked": "BOOLEAN DEFAULT FALSE",
+      "read_at": "TIMESTAMP",
+      "bookmarked_at": "TIMESTAMP",
+      "created_at": "TIMESTAMP"
+    }
+  },
+  "api_endpoints": {
+    "authentication": {
+      "POST /api/auth/signup": "User registration",
+      "POST /api/auth/login": "User login",
+      "POST /api/auth/logout": "User logout",
+      "GET /api/auth/me": "Get current user"
+    },
+    "preferences": {
+      "GET /api/users/preferences": "Get user preferences",
+      "PUT /api/users/preferences": "Update user preferences",
+      "POST /api/users/preferences/categories": "Add/remove categories",
+      "POST /api/users/preferences/sources": "Add/remove sources"
+    },
+    "articles": {
+      "GET /api/articles": "Get personalized articles",
+      "GET /api/articles/:id": "Get specific article",
+      "POST /api/articles/:id/read": "Mark article as read",
+      "POST /api/articles/:id/bookmark": "Bookmark/unbookmark article"
+    }
+  },
+  "recommended_improvements": [
+    "Add user authentication with NextAuth.js or similar",
+    "Implement PostgreSQL or MongoDB for data storage",
+    "Add real-time notifications with WebSockets",
+    "Include content recommendation engine",
+    "Add user reading analytics and insights",
+    "Implement article sharing and social features",
+    "Add content moderation and spam filtering",
+    "Include A/B testing for personalization algorithms"
+  ]
+}
+
