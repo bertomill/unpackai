@@ -6,6 +6,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { LayoutControls, type LayoutSettings } from "@/components/layout-controls"
 import { NewsViews, type NewsArticle } from "@/components/news-views"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { UserMenu } from "@/components/auth/user-menu"
 import { 
   RefreshCw, 
   TrendingUp, 
@@ -126,7 +128,8 @@ export default function Home() {
     : mockNews.filter(article => article.category === selectedCategory)
 
   return (
-    <div className="min-h-screen bg-background">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 notion-glass border-b border-border">
         <div className="px-4 py-3 flex items-center justify-between">
@@ -149,6 +152,7 @@ export default function Home() {
             <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
               <Volume2 className="w-4 h-4" />
             </Button>
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -245,6 +249,9 @@ export default function Home() {
             articleCount={filteredNews.length}
           />
 
+          {/* Spacer for visual separation */}
+          <div className="h-8"></div>
+
           {/* News Feed */}
           <div className="space-y-6">
             <NewsViews
@@ -281,6 +288,7 @@ export default function Home() {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   )
 }
