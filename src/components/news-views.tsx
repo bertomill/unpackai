@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,7 +9,6 @@ import {
   Bookmark,
   Share2,
   MoreHorizontal,
-  Calendar,
   User,
   Clock
 } from "lucide-react"
@@ -33,9 +33,9 @@ interface NewsViewsProps {
   viewType: 'grid' | 'list' | 'timeline' | 'calendar' | 'gallery' | 'chart'
   cardSize: 'small' | 'medium' | 'large'
   cardPreview: 'none' | 'excerpt' | 'full'
-  wrapProperties: boolean
+  wrapProperties?: boolean
   groupBy: 'none' | 'category' | 'trending' | 'source' | 'date'
-  colorColumns: boolean
+  colorColumns?: boolean
   showIcons: boolean
 }
 
@@ -44,9 +44,9 @@ export function NewsViews({
   viewType,
   cardSize,
   cardPreview,
-  wrapProperties,
+  wrapProperties = false,
   groupBy,
-  colorColumns,
+  colorColumns = false,
   showIcons
 }: NewsViewsProps) {
   
@@ -103,10 +103,11 @@ export function NewsViews({
                     </div>
                   </div>
                 )}
-                <img
+                <Image
                   src={article.image}
                   alt={article.title}
-                  className="w-full h-full object-cover rounded-t-xl"
+                  fill
+                  className="object-cover rounded-t-xl"
                 />
                 {article.trending && (
                   <Badge className="absolute top-3 right-3 notion-gradient border-0">
@@ -177,10 +178,11 @@ export function NewsViews({
             <div className="flex items-start space-x-4">
               {/* Article Image */}
               <div className="relative w-20 h-20 flex-shrink-0">
-                <img
+                <Image
                   src={article.image}
                   alt={article.title}
-                  className="w-full h-full object-cover rounded-lg"
+                  fill
+                  className="object-cover rounded-lg"
                 />
                 {article.trending && (
                   <Badge className="absolute -top-2 -right-2 notion-gradient border-0 text-xs">
@@ -240,7 +242,7 @@ export function NewsViews({
     <div className="relative">
       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border"></div>
       <div className="space-y-6">
-        {articles.map((article, index) => (
+        {articles.map((article) => (
           <div key={article.id} className="relative flex items-start space-x-4">
             {/* Timeline dot */}
             <div className="relative z-10 w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
@@ -307,10 +309,11 @@ export function NewsViews({
         <Card key={article.id} className="spotify-card group overflow-hidden">
           <CardContent className="p-0">
             <div className="relative aspect-square">
-              <img
+              <Image
                 src={article.image}
                 alt={article.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               
