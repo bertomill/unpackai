@@ -8,11 +8,11 @@ import Redis from 'ioredis'
 interface QueueJob {
   id: string
   userId: string
-  config: any
+  config: unknown
   status: 'pending' | 'processing' | 'completed' | 'failed'
   createdAt: Date
   completedAt?: Date
-  result?: any
+  result?: unknown
   error?: string
 }
 
@@ -34,7 +34,7 @@ class RedisQueueService {
   /**
    * Add job to queue (handles 1000+ concurrent requests)
    */
-  async addJob(userId: string, config: any): Promise<string> {
+  async addJob(userId: string, config: unknown): Promise<string> {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     const job: QueueJob = {
@@ -174,7 +174,7 @@ class RedisQueueService {
   /**
    * Trigger N8n workflow
    */
-  private async triggerN8nWorkflow(jobId: string, config: any): Promise<any> {
+  private async triggerN8nWorkflow(jobId: string, config: unknown): Promise<unknown> {
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
     const n8nApiKey = process.env.N8N_API_KEY
 

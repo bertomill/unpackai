@@ -226,7 +226,7 @@ export class AgenticWorkflow {
   /**
    * Execute parallel searches across different sources and strategies
    */
-  private async executeParallelSearches(queries: string[]): Promise<any[]> {
+  private async executeParallelSearches(queries: string[]): Promise<unknown[]> {
     const searchPromises = queries.map(query => 
       this.searchWithTavily(query)
     )
@@ -235,7 +235,7 @@ export class AgenticWorkflow {
     
     // Flatten and filter successful results
     return results
-      .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+      .filter((result): result is PromiseFulfilledResult<unknown> => result.status === 'fulfilled')
       .map(result => result.value)
       .flat()
   }
@@ -243,7 +243,7 @@ export class AgenticWorkflow {
   /**
    * Search using Tavily API with intelligent query optimization
    */
-  private async searchWithTavily(query: string): Promise<any[]> {
+  private async searchWithTavily(query: string): Promise<unknown[]> {
     try {
       const response = await fetch('/api/agentic-workflow/search', {
         method: 'POST',
@@ -275,7 +275,7 @@ export class AgenticWorkflow {
   /**
    * Analyze and rank content using AI-powered analysis
    */
-  private async analyzeAndRankContent(results: any[]): Promise<EnhancedSearchResult[]> {
+  private async analyzeAndRankContent(results: unknown[]): Promise<EnhancedSearchResult[]> {
     const analysisPromises = results.map(result => 
       this.analyzeContent(result)
     )
@@ -290,7 +290,7 @@ export class AgenticWorkflow {
   /**
    * Analyze individual content piece using AI
    */
-  private async analyzeContent(result: any): Promise<EnhancedSearchResult> {
+  private async analyzeContent(result: unknown): Promise<EnhancedSearchResult> {
     try {
       const response = await fetch('/api/agentic-workflow/analyze', {
         method: 'POST',

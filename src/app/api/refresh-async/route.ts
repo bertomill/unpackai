@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken, User } from '@/lib/auth'
+import { verifyToken } from '@/lib/auth'
 import { redisQueueService } from '@/lib/redis-queue-service'
 
 export async function POST(request: NextRequest) {

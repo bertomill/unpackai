@@ -3,7 +3,7 @@
  * Handles user preferences for personalization in the agentic workflow
  */
 
-import { User } from '@/lib/auth'
+// import { User } from '@/lib/auth'
 
 export interface UserPreferences {
   interests: string[]
@@ -34,7 +34,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
 /**
  * Get user preferences from database or create defaults
  */
-export async function getUserPreferences(userId: string): Promise<UserPreferences> {
+export async function getUserPreferences(_userId: string): Promise<UserPreferences> {
   try {
     // This would typically fetch from database
     // For now, return intelligent defaults based on user profile

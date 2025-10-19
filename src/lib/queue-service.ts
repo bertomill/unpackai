@@ -6,11 +6,11 @@
 interface QueueJob {
   id: string
   userId: string
-  config: any
+  config: unknown
   status: 'pending' | 'processing' | 'completed' | 'failed'
   createdAt: Date
   completedAt?: Date
-  result?: any
+  result?: unknown
   error?: string
 }
 
@@ -21,7 +21,7 @@ class QueueService {
   /**
    * Add a new job to the queue
    */
-  async addJob(userId: string, config: any): Promise<string> {
+  async addJob(userId: string, config: unknown): Promise<string> {
     const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
     const job: QueueJob = {
@@ -100,7 +100,7 @@ class QueueService {
   /**
    * Trigger N8n workflow
    */
-  private async triggerN8nWorkflow(job: QueueJob): Promise<any> {
+  private async triggerN8nWorkflow(job: QueueJob): Promise<unknown> {
     const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL
     const n8nApiKey = process.env.N8N_API_KEY
 

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: SummarizationRequest = await request.json()
-    const { content, title, style, readingLevel } = body
+    const { content, title, style: _style, readingLevel: _readingLevel } = body
 
     if (!content || !title) {
       return NextResponse.json({ error: 'Content and title are required' }, { status: 400 })
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       const jsonMatch = summaryText.match(/```json\n([\s\S]*?)\n```/) || summaryText.match(/\{[\s\S]*\}/)
       const jsonString = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : summaryText
       summaryResult = JSON.parse(jsonString)
-    } catch (parseError) {
+    } catch (_parseError) {
       console.error('Failed to parse OpenAI response:', summaryText)
       // Fallback to basic summarization
       summaryResult = createFallbackSummary(content, title, style, readingLevel)
@@ -209,7 +209,7 @@ function createFallbackSummary(
  * Extract key points from content
  */
 function extractKeyPoints(content: string, title: string): string[] {
-  const text = (content + ' ' + title).toLowerCase()
+  const _text = (content + ' ' + title).toLowerCase()
   
   // Look for sentences that contain important keywords
   const importantKeywords = [

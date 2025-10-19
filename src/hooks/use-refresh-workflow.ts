@@ -11,7 +11,7 @@ interface RefreshState {
   status: 'idle' | 'queued' | 'processing' | 'completed' | 'error'
   message: string
   jobId?: string
-  results?: any[]
+  results?: unknown[]
   error?: string
 }
 
@@ -81,7 +81,7 @@ export function useRefreshWorkflow() {
         error: error instanceof Error ? error.message : 'Unknown error'
       })
     }
-  }, [user, token])
+  }, [user, token, startPolling])
 
   const startPolling = useCallback((jobId: string) => {
     // Clear any existing polling

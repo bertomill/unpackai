@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: ContentAnalysisRequest = await request.json()
-    const { content, title, url, source } = body
+    const { content, title, url: _url, source } = body
 
     if (!content || !title) {
       return NextResponse.json({ error: 'Content and title are required' }, { status: 400 })
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       const jsonMatch = analysisText.match(/```json\n([\s\S]*?)\n```/) || analysisText.match(/\{[\s\S]*\}/)
       const jsonString = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : analysisText
       analysisResult = JSON.parse(jsonString)
-    } catch (parseError) {
+    } catch (_parseError) {
       console.error('Failed to parse OpenAI response:', analysisText)
       // Fallback to basic analysis
       analysisResult = createFallbackAnalysis(content, title, source)
