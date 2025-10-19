@@ -22,11 +22,39 @@ class RedisQueueService {
   private maxConcurrentJobs = 10 // Process max 10 jobs simultaneously
 
   constructor() {
-    this.redis = new Redis({
+    const redisConfig: {
+      host: string
+      port: number
+      retryDelayOnFailover: number
+      enableReadyCheck: boolean
+      maxRetriesPerRequest: null
+      password?: string
+    } = {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD,
-      maxRetriesPerRequest: 3
+      retryDelayOnFailover: 100,
+      enableReadyCheck: false,
+      maxRetriesPerRequest: null
+    }
+
+    // Add password only if provided (for Redis Cloud)
+    if (process.env.REDIS_PASSWORD) {
+      redisConfig.password = process.env.REDIS_PASSWORD
+    }
+
+    this.redis = new Redis(redisConfig)
+
+    // Handle connection events
+    this.redis.on('connect', () => {
+      console.log('✅ Connected to Redis')
+    })
+
+    this.redis.on('error', (err) => {
+      console.error('❌ Redis connection error:', err.message)
+    })
+
+    this.redis.on('ready', () => {
+      console.log('🚀 Redis is ready to accept commands')
     })
   }
 
