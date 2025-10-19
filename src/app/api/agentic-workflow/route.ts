@@ -16,20 +16,27 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const user = await verifyToken(token)
+    const userData = await verifyToken(token)
     
-    if (!user) {
+    if (!userData) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+    }
+
+    // Create proper User object
+    const user = {
+      id: userData.userId,
+      email: userData.email,
+      name: userData.email.split('@')[0] // Use email prefix as name
     }
 
     // Parse request body for workflow configuration
     const body = await request.json()
     const config = body.config || {}
 
-    console.log('🚀 Starting agentic workflow for user:', user.name)
+    console.log('🚀 Starting agentic workflow for user:', user.email)
 
     // Execute the complete agentic workflow
-    const results = await executeAgenticWorkflow(user, config)
+    const results = await executeAgenticWorkflow(user, token, config)
 
     console.log('✅ Agentic workflow completed successfully')
 

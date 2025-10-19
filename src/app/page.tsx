@@ -20,7 +20,9 @@ import {
   Volume2,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  X
 } from "lucide-react"
 
 // Mock data for AI news articles
@@ -113,6 +115,7 @@ export default function Home() {
   const [refreshStatus, setRefreshStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>(mockNews)
   const [refreshMessage, setRefreshMessage] = useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
   // Layout settings state
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>({
@@ -224,6 +227,16 @@ export default function Home() {
       <header className="sticky top-0 z-50 notion-glass border-b border-border">
         <div className="px-3 sm:px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Mobile hamburger menu button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </Button>
+            
             <div className="w-7 h-7 sm:w-8 sm:h-8 notion-gradient rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-xs sm:text-sm">U</span>
             </div>
@@ -269,7 +282,81 @@ export default function Home() {
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
+        {/* Mobile Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-40">
+            <div 
+              className="fixed inset-0 bg-black/50" 
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <aside className="fixed left-0 top-0 h-full w-64 bg-sidebar border-r border-border z-50">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 notion-gradient rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">U</span>
+                    </div>
+                    <h2 className="text-lg font-bold notion-text-gradient">UnpackAI</h2>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <nav className="space-y-2">
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      Discover
+                    </h3>
+                    <Button variant="ghost" className="w-full justify-start text-foreground bg-primary/10">
+                      <TrendingUp className="w-4 h-4 mr-3" />
+                      Trending Now
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                      <Clock className="w-4 h-4 mr-3" />
+                      Latest News
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-foreground">
+                      <Star className="w-4 h-4 mr-3" />
+                      Bookmarked
+                    </Button>
+                  </div>
+                  
+                  <Separator className="my-4" />
+                  
+                  <div className="space-y-1">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      Categories
+                    </h3>
+                    {categories.map((category) => (
+                      <Button
+                        key={category.name}
+                        variant="ghost"
+                        className={`w-full justify-start ${
+                          selectedCategory === category.name 
+                            ? 'text-foreground bg-primary/10' 
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                        onClick={() => {
+                          setSelectedCategory(category.name)
+                          setMobileMenuOpen(false)
+                        }}
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                  </div>
+                </nav>
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {/* Desktop Sidebar */}
         <aside className="hidden md:block w-64 bg-sidebar border-r border-border min-h-screen">
           <div className="p-4">
             <nav className="space-y-2">

@@ -34,12 +34,12 @@ interface LayoutControlsProps {
 }
 
 const viewTypes = [
-  { id: 'grid', label: 'Grid', icon: Grid3X3, description: 'Card-based layout' },
-  { id: 'list', label: 'List', icon: List, description: 'Compact list view' },
-  { id: 'timeline', label: 'Timeline', icon: Calendar, description: 'Chronological view' },
-  { id: 'calendar', label: 'Calendar', icon: Calendar, description: 'Date-based view' },
-  { id: 'gallery', label: 'Gallery', icon: LayoutGrid, description: 'Image-focused view' },
-  { id: 'chart', label: 'Chart', icon: BarChart3, description: 'Analytics view' }
+  { id: 'grid', label: 'Grid', icon: Grid3X3, description: 'Card-based layout', shortLabel: 'Grid' },
+  { id: 'list', label: 'List', icon: List, description: 'Compact list view', shortLabel: 'List' },
+  { id: 'timeline', label: 'Timeline', icon: Calendar, description: 'Chronological view', shortLabel: 'Time' },
+  { id: 'calendar', label: 'Calendar', icon: Calendar, description: 'Date-based view', shortLabel: 'Cal' },
+  { id: 'gallery', label: 'Gallery', icon: LayoutGrid, description: 'Image-focused view', shortLabel: 'Gallery' },
+  { id: 'chart', label: 'Chart', icon: BarChart3, description: 'Analytics view', shortLabel: 'Chart' }
 ]
 
 const cardSizes = [
@@ -119,7 +119,7 @@ export function LayoutControls({ settings, onSettingsChange, articleCount }: Lay
             >
               <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="text-xs font-medium hidden sm:block">{view.label}</span>
-              <span className="text-xs font-medium sm:hidden">{view.label.charAt(0)}</span>
+              <span className="text-xs font-medium sm:hidden">{view.shortLabel}</span>
             </Button>
           )
         })}

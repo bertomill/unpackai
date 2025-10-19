@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: SummarizationRequest = await request.json()
-    const { content, title, style: _style, readingLevel: _readingLevel } = body
+    const { content, title, style, readingLevel } = body
 
     if (!content || !title) {
       return NextResponse.json({ error: 'Content and title are required' }, { status: 400 })
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       const jsonMatch = summaryText.match(/```json\n([\s\S]*?)\n```/) || summaryText.match(/\{[\s\S]*\}/)
       const jsonString = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : summaryText
       summaryResult = JSON.parse(jsonString)
-    } catch (_parseError) {
+    } catch {
       console.error('Failed to parse OpenAI response:', summaryText)
       // Fallback to basic summarization
       summaryResult = createFallbackSummary(content, title, style, readingLevel)
@@ -173,8 +173,8 @@ Return only the JSON object, no additional text.
 function createFallbackSummary(
   content: string, 
   title: string, 
-  style: string, 
-  readingLevel: string
+  _style: string, 
+  _readingLevel: string
 ): SummarizationResponse {
   // Basic summarization logic
   const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 20)

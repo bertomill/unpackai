@@ -9,7 +9,7 @@
  */
 
 import { User } from '@/lib/auth'
-import { getUserPreferences, generatePersonalizedQueries, calculatePersonalizationScore } from '@/lib/user-preferences'
+import { getUserPreferences, generatePersonalizedQueries, calculatePersonalizationScore, UserPreferences } from '@/lib/user-preferences'
 
 // Key AI websites and sources for targeted searches
 export const AI_SOURCES = {
@@ -68,14 +68,6 @@ export const SEARCH_STRATEGIES = {
 } as const
 
 // User preference categories for personalization
-export interface UserPreferences {
-  interests: string[]
-  readingLevel: 'beginner' | 'intermediate' | 'advanced'
-  preferredSources: string[]
-  topics: string[]
-  timePreference: 'morning' | 'afternoon' | 'evening'
-  readingTime: number // minutes per session
-}
 
 // Content analysis and ranking
 export interface ContentAnalysis {
@@ -129,12 +121,13 @@ export const DEFAULT_WORKFLOW_CONFIG: WorkflowConfig = {
 export class AgenticWorkflow {
   private config: WorkflowConfig
   private user: User
-  private userPreferences: UserPreferences
+  private token: string
+  private userPreferences?: UserPreferences
 
-  constructor(user: User, config: WorkflowConfig = DEFAULT_WORKFLOW_CONFIG) {
+  constructor(user: User, token: string, config: WorkflowConfig = DEFAULT_WORKFLOW_CONFIG) {
     this.user = user
+    this.token = token
     this.config = config
-    this.userPreferences = this.initializeUserPreferences()
   }
 
   /**
@@ -152,7 +145,11 @@ export class AgenticWorkflow {
         preferredSources: ['TechCrunch', 'The Verge', 'OpenAI Blog'],
         topics: ['artificial intelligence', 'machine learning', 'neural networks'],
         timePreference: 'morning',
-        readingTime: 15
+        readingTime: 15,
+        categories: ['AI Research', 'AI Development', 'Industry News'],
+        excludedTopics: ['cryptocurrency', 'blockchain'],
+        language: 'en',
+        region: 'us'
       }
     }
   }
@@ -162,6 +159,11 @@ export class AgenticWorkflow {
    */
   async executeWorkflow(): Promise<EnhancedSearchResult[]> {
     console.log('🤖 Starting agentic workflow for user:', this.user.name)
+    
+    // Initialize user preferences if not already done
+    if (!this.userPreferences) {
+      this.userPreferences! = await this.initializeUserPreferences()
+    }
     
     try {
       // Step 1: Generate intelligent search queries
@@ -201,7 +203,7 @@ export class AgenticWorkflow {
    */
   private async generateSearchQueries(): Promise<string[]> {
     // Use the personalized query generation from user preferences
-    const personalizedQueries = generatePersonalizedQueries(this.userPreferences)
+    const personalizedQueries = generatePersonalizedQueries(this.userPreferences!)
     
     // Add current AI trends and topics
     const trendingTopics = [
@@ -235,7 +237,7 @@ export class AgenticWorkflow {
     
     // Flatten and filter successful results
     return results
-      .filter((result): result is PromiseFulfilledResult<unknown> => result.status === 'fulfilled')
+      .filter((result): result is PromiseFulfilledResult<unknown[]> => result.status === 'fulfilled')
       .map(result => result.value)
       .flat()
   }
@@ -249,7 +251,7 @@ export class AgenticWorkflow {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.user.token}`
+          'Authorization': `Bearer ${this.token}`
         },
         body: JSON.stringify({
           query,
@@ -291,18 +293,28 @@ export class AgenticWorkflow {
    * Analyze individual content piece using AI
    */
   private async analyzeContent(result: unknown): Promise<EnhancedSearchResult> {
+    const searchResult = result as { 
+      content: string; 
+      title: string; 
+      url: string; 
+      source: string;
+      excerpt?: string;
+      timestamp?: string;
+      image?: string;
+    }
+    
     try {
       const response = await fetch('/api/agentic-workflow/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.user.token}`
+          'Authorization': `Bearer ${this.token}`
         },
         body: JSON.stringify({
-          content: result.content,
-          title: result.title,
-          url: result.url,
-          source: result.source
+          content: searchResult.content,
+          title: searchResult.title,
+          url: searchResult.url,
+          source: searchResult.source
         })
       })
 
@@ -313,30 +325,30 @@ export class AgenticWorkflow {
       const analysis = await response.json()
 
       return {
-        title: result.title,
-        url: result.url,
-        content: result.content,
-        excerpt: result.excerpt || this.generateExcerpt(result.content),
-        source: result.source,
-        timestamp: result.timestamp || new Date().toISOString(),
+        title: searchResult.title,
+        url: searchResult.url,
+        content: searchResult.content,
+        excerpt: searchResult.excerpt || this.generateExcerpt(searchResult.content),
+        source: searchResult.source,
+        timestamp: searchResult.timestamp || new Date().toISOString(),
         category: analysis.category || 'AI News',
         tags: analysis.tags || [],
         analysis: analysis.analysis,
-        readTime: this.calculateReadTime(result.content),
+        readTime: this.calculateReadTime(searchResult.content),
         trending: analysis.trending || false,
-        image: result.image
+        image: searchResult.image || '/placeholder-news.jpg'
       }
 
     } catch (error) {
       console.error('Content analysis failed:', error)
       // Return basic result if analysis fails
       return {
-        title: result.title,
-        url: result.url,
-        content: result.content,
-        excerpt: this.generateExcerpt(result.content),
-        source: result.source,
-        timestamp: result.timestamp || new Date().toISOString(),
+        title: searchResult.title,
+        url: searchResult.url,
+        content: searchResult.content,
+        excerpt: this.generateExcerpt(searchResult.content),
+        source: searchResult.source,
+        timestamp: searchResult.timestamp || new Date().toISOString(),
         category: 'AI News',
         tags: [],
         analysis: {
@@ -347,9 +359,9 @@ export class AgenticWorkflow {
           personalization: 0.5,
           overallScore: 0.5
         },
-        readTime: this.calculateReadTime(result.content),
+        readTime: this.calculateReadTime(searchResult.content),
         trending: false,
-        image: result.image
+        image: searchResult.image || '/placeholder-news.jpg'
       }
     }
   }
@@ -384,7 +396,7 @@ export class AgenticWorkflow {
       result.content,
       result.title,
       result.source,
-      this.userPreferences
+      this.userPreferences!
     )
   }
 
@@ -412,13 +424,13 @@ export class AgenticWorkflow {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.user.token}`
+          'Authorization': `Bearer ${this.token}`
         },
         body: JSON.stringify({
           content: result.content,
           title: result.title,
           style: this.config.summarizationStyle,
-          readingLevel: this.userPreferences.readingLevel
+          readingLevel: this.userPreferences!.readingLevel
         })
       })
 
@@ -506,7 +518,7 @@ export class AgenticWorkflow {
 /**
  * Factory function to create and execute workflow
  */
-export async function executeAgenticWorkflow(user: User, config?: WorkflowConfig): Promise<EnhancedSearchResult[]> {
-  const workflow = new AgenticWorkflow(user, config)
+export async function executeAgenticWorkflow(user: User, token: string, config?: WorkflowConfig): Promise<EnhancedSearchResult[]> {
+  const workflow = new AgenticWorkflow(user, token, config)
   return await workflow.executeWorkflow()
 }

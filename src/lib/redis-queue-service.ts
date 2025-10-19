@@ -26,7 +26,6 @@ class RedisQueueService {
       host: process.env.REDIS_HOST || 'localhost',
       port: parseInt(process.env.REDIS_PORT || '6379'),
       password: process.env.REDIS_PASSWORD,
-      retryDelayOnFailover: 100,
       maxRetriesPerRequest: 3
     })
   }
@@ -77,7 +76,7 @@ class RedisQueueService {
       id: jobData.id,
       userId: jobData.userId,
       config: JSON.parse(jobData.config || '{}'),
-      status: jobData.status as any,
+      status: jobData.status as 'pending' | 'processing' | 'completed' | 'failed',
       createdAt: new Date(jobData.createdAt),
       completedAt: jobData.completedAt ? new Date(jobData.completedAt) : undefined,
       result: jobData.result ? JSON.parse(jobData.result) : undefined,
