@@ -8,6 +8,8 @@ import { LayoutControls, type LayoutSettings } from "@/components/layout-control
 import { NewsViews, type NewsArticle } from "@/components/news-views"
 import { ProtectedRoute } from "@/components/auth/protected-route"
 import { UserMenu } from "@/components/auth/user-menu"
+import { PWAInstallPrompt, IOSInstallInstructions } from "@/components/pwa-install-prompt"
+import { useAuth } from "@/contexts/auth-context"
 import { 
   RefreshCw, 
   TrendingUp, 
@@ -15,7 +17,10 @@ import {
   Star, 
   Play,
   Pause,
-  Volume2
+  Volume2,
+  Loader2,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react"
 
 // Mock data for AI news articles
@@ -101,9 +106,13 @@ const categories = [
 ]
 
 export default function Home() {
+  const { user, token } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [isPlaying, setIsPlaying] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [refreshStatus, setRefreshStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>(mockNews)
+  const [refreshMessage, setRefreshMessage] = useState('')
   
   // Layout settings state
   const [layoutSettings, setLayoutSettings] = useState<LayoutSettings>({
@@ -116,41 +125,143 @@ export default function Home() {
     showIcons: true
   })
 
+  // Enhanced refresh function with agentic workflow
   const handleRefresh = async () => {
+    if (!user || !token) {
+      console.error('User not authenticated')
+      return
+    }
+
     setRefreshing(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setRefreshing(false)
+    setRefreshStatus('loading')
+    setRefreshMessage('🤖 Conducting intelligent search across AI websites...')
+
+    try {
+      const response = await fetch('/api/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          config: {
+            maxResults: 15,
+            searchDepth: 'medium',
+            personalizationLevel: 'advanced',
+            summarizationStyle: 'detailed',
+            includeImages: true,
+            includeVideos: false
+          }
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.results) {
+        // Transform agentic workflow results to NewsArticle format
+        const transformedArticles: NewsArticle[] = data.results.map((result: {
+          title: string;
+          excerpt: string;
+          content: string;
+          source: string;
+          url: string;
+          timestamp: string;
+          category: string;
+          readTime: string;
+          trending: boolean;
+          image?: string;
+          tags?: string[];
+        }, index: number) => ({
+          id: index + 1,
+          title: result.title,
+          excerpt: result.excerpt,
+          content: result.content,
+          source: result.source,
+          url: result.url,
+          timestamp: result.timestamp,
+          category: result.category,
+          readTime: result.readTime,
+          trending: result.trending,
+          image: result.image,
+          tags: result.tags || []
+        }))
+
+        setNewsArticles(transformedArticles)
+        setRefreshStatus('success')
+        setRefreshMessage(`✅ Found ${data.results.length} personalized articles for you!`)
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          setRefreshStatus('idle')
+          setRefreshMessage('')
+        }, 3000)
+      } else {
+        throw new Error(data.error || 'Refresh failed')
+      }
+    } catch (error) {
+      console.error('Refresh failed:', error)
+      setRefreshStatus('error')
+      setRefreshMessage('❌ Failed to refresh content. Please try again.')
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => {
+        setRefreshStatus('idle')
+        setRefreshMessage('')
+      }, 5000)
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const filteredNews = selectedCategory === "All" 
-    ? mockNews 
-    : mockNews.filter(article => article.category === selectedCategory)
+    ? newsArticles 
+    : newsArticles.filter(article => article.category === selectedCategory)
 
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 notion-glass border-b border-border">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 notion-gradient rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">U</span>
+        <div className="px-3 sm:px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 notion-gradient rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs sm:text-sm">U</span>
             </div>
-            <h1 className="text-xl font-bold notion-text-gradient">UnpackAI</h1>
+            <h1 className="text-lg sm:text-xl font-bold notion-text-gradient">UnpackAI</h1>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-9 sm:w-9"
+              >
+                {refreshing ? (
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                ) : refreshStatus === 'success' ? (
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
+                ) : refreshStatus === 'error' ? (
+                  <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
+                ) : (
+                  <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
+                )}
+              </Button>
+              
+              {/* Refresh status tooltip */}
+              {refreshMessage && (
+                <div className="absolute top-full right-0 mt-2 px-3 py-2 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[200px]">
+                  <p className="text-sm text-foreground">{refreshMessage}</p>
+                </div>
+              )}
+            </div>
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground h-8 w-8 sm:h-9 sm:w-9 hidden sm:flex"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <Volume2 className="w-4 h-4" />
+              <Volume2 className="w-3 h-3 sm:w-4 sm:h-4" />
             </Button>
             <UserMenu />
           </div>
@@ -206,9 +317,9 @@ export default function Home() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-3 sm:p-4 md:p-6">
           {/* Mobile Category Filter */}
-          <div className="md:hidden mb-6">
+          <div className="md:hidden mb-4 sm:mb-6">
             <ScrollArea className="w-full">
               <div className="flex space-x-2 pb-2">
                 {categories.map((category) => (
@@ -216,9 +327,9 @@ export default function Home() {
                     key={category.name}
                     variant={selectedCategory === category.name ? "default" : "outline"}
                     size="sm"
-                    className={`whitespace-nowrap ${
+                    className={`whitespace-nowrap text-xs sm:text-sm px-3 py-1.5 ${
                       selectedCategory === category.name 
-                        ? 'spotify-gradient border-0' 
+                        ? 'notion-gradient border-0 text-white' 
                         : ''
                     }`}
                     onClick={() => setSelectedCategory(category.name)}
@@ -231,12 +342,12 @@ export default function Home() {
           </div>
 
           {/* Welcome Section */}
-          <div className="mb-8">
-            <div className="notion-gradient rounded-2xl p-6 md:p-8 text-white">
-              <h2 className="text-2xl md:text-3xl font-bold mb-2">
+          <div className="mb-6 sm:mb-8">
+            <div className="notion-gradient rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-white">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
                 Good morning! 🌅
               </h2>
-              <p className="text-white/80 text-sm md:text-base">
+              <p className="text-white/80 text-sm sm:text-base">
                 Here&apos;s what&apos;s happening in AI today. Stay ahead of the curve with the latest developments.
               </p>
             </div>
@@ -253,7 +364,7 @@ export default function Home() {
           <div className="h-8"></div>
 
           {/* News Feed */}
-          <div className="space-y-6">
+          <div className="space-y-6 pb-20 md:pb-6">
             <NewsViews
               articles={filteredNews}
               viewType={layoutSettings.viewType}
@@ -269,12 +380,12 @@ export default function Home() {
       </div>
 
       {/* Bottom Player Bar (Mobile) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 notion-glass border-t border-border p-4">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 notion-glass border-t border-border p-3 sm:p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md" />
-            <div>
-              <p className="text-sm font-medium">AI News Brief</p>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-md flex-shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm font-medium truncate">AI News Brief</p>
               <p className="text-xs text-muted-foreground">Stay updated</p>
             </div>
           </div>
@@ -282,12 +393,16 @@ export default function Home() {
             variant="ghost" 
             size="sm" 
             onClick={() => setIsPlaying(!isPlaying)}
-            className="text-foreground"
+            className="text-foreground h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
           >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5" />}
           </Button>
         </div>
       </div>
+      
+      {/* PWA Install Prompts */}
+      <PWAInstallPrompt />
+      <IOSInstallInstructions />
       </div>
     </ProtectedRoute>
   )

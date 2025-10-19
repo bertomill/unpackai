@@ -73,12 +73,12 @@ export function LayoutControls({ settings, onSettingsChange, articleCount }: Lay
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Header with View Type Selection */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <h3 className="text-lg font-semibold">Layout</h3>
-          <Badge variant="secondary" className="notion-gradient text-white border-0">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <h3 className="text-base sm:text-lg font-semibold">Layout</h3>
+          <Badge variant="secondary" className="notion-gradient text-white border-0 text-xs">
             {articleCount} articles
           </Badge>
         </div>
@@ -86,15 +86,23 @@ export function LayoutControls({ settings, onSettingsChange, articleCount }: Lay
           variant="ghost"
           size="sm"
           onClick={() => setShowSettings(!showSettings)}
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground hidden sm:flex"
         >
           <Settings className="w-4 h-4 mr-2" />
           Settings
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowSettings(!showSettings)}
+          className="text-muted-foreground hover:text-foreground sm:hidden h-8 w-8 p-0"
+        >
+          <Settings className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* View Type Selection */}
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 sm:gap-2">
         {viewTypes.map((view) => {
           const Icon = view.icon
           const isSelected = settings.viewType === view.id
@@ -104,13 +112,14 @@ export function LayoutControls({ settings, onSettingsChange, articleCount }: Lay
               key={view.id}
               variant={isSelected ? "default" : "outline"}
               size="sm"
-              className={`h-auto p-3 flex flex-col items-center space-y-2 ${
-                isSelected ? 'notion-gradient border-0' : ''
+              className={`h-auto p-2 sm:p-3 flex flex-col items-center space-y-1 sm:space-y-2 ${
+                isSelected ? 'notion-gradient border-0 text-white' : ''
               }`}
               onClick={() => handleSettingChange('viewType', view.id)}
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs font-medium">{view.label}</span>
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-xs font-medium hidden sm:block">{view.label}</span>
+              <span className="text-xs font-medium sm:hidden">{view.label.charAt(0)}</span>
             </Button>
           )
         })}

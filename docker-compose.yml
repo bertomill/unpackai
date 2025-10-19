@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # N8n for workflow automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: unpackai-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=unpackai2024
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+      - N8N_QUEUE_BULL_REDIS_HOST=redis
+      - N8N_QUEUE_BULL_REDIS_PORT=6379
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - redis
+    networks:
+      - unpackai-network
+
+  # Redis for job queuing (optional, for advanced setups)
+  redis:
+    image: redis:7-alpine
+    container_name: unpackai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - unpackai-network
+
+  # PostgreSQL for N8n data (optional, for production)
+  postgres:
+    image: postgres:15-alpine
+    container_name: unpackai-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=n8n_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - unpackai-network
+
+volumes:
+  n8n_data:
+  redis_data:
+  postgres_data:
+
+networks:
+  unpackai-network:
+    driver: bridge

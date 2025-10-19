@@ -4,6 +4,14 @@ A beautiful Progressive Web App (PWA) for AI news aggregation with a Spotify-ins
 
 ## 🚀 Features
 
+### 🤖 Agentic Workflow Engine
+- **Intelligent Search**: Conducts targeted searches across key AI websites using Tavily API
+- **AI-Powered Analysis**: Uses OpenAI to analyze content relevance, credibility, and engagement
+- **Smart Summarization**: Generates personalized summaries based on user reading level
+- **Content Personalization**: Ranks and filters content based on user preferences and interests
+- **Real-time Aggregation**: Fetches fresh, personalized AI news with each refresh
+- **Multi-source Intelligence**: Searches across research papers, news sites, and community sources
+
 ### ✨ Design & UI
 - **Spotify-inspired Interface**: Beautiful dark theme with green accent colors
 - **Mobile-First Design**: Optimized for mobile devices with responsive layout
@@ -13,9 +21,15 @@ A beautiful Progressive Web App (PWA) for AI news aggregation with a Spotify-ins
 
 ### 📱 Mobile Experience
 - **PWA Support**: Install as a native app on iOS and Android
-- **Touch-Friendly**: Large touch targets and smooth scrolling
-- **Offline Capability**: Service worker for offline functionality
+- **Touch-Friendly**: Large touch targets (44px minimum) and smooth scrolling
+- **Offline Capability**: Service worker for offline functionality with cached content
 - **App-like Navigation**: Bottom navigation bar for mobile users
+- **Responsive Layout**: Optimized layouts for all screen sizes (mobile, tablet, desktop)
+- **Mobile-First Design**: Designed with mobile users in mind
+- **Adaptive UI Elements**: Buttons, cards, and text scale appropriately
+- **Touch Gestures**: Swipe-friendly category filters and smooth interactions
+- **Install Prompts**: Smart installation prompts for different platforms
+- **Offline Page**: Custom offline experience when no internet connection
 
 ### 🎨 UI Components
 - **Card-based Layout**: Clean, organized news articles with images
@@ -39,6 +53,29 @@ A beautiful Progressive Web App (PWA) for AI news aggregation with a Spotify-ins
 - **Icons**: Lucide React
 - **Theme**: next-themes for dark/light mode
 - **PWA**: next-pwa for Progressive Web App functionality
+
+## 📱 PWA Features
+
+### Progressive Web App Capabilities
+- **Installable**: Add to home screen on mobile and desktop
+- **Offline Support**: Service worker caches content for offline viewing
+- **App-like Experience**: Standalone mode without browser UI
+- **Background Sync**: Sync data when connection is restored
+- **Push Notifications**: Get notified about new AI news (configurable)
+- **Responsive Icons**: Multiple icon sizes for different platforms
+- **Smart Install Prompts**: Platform-specific installation instructions
+
+### Installation Instructions
+1. **Desktop (Chrome/Edge)**: Look for the install button in the address bar
+2. **Mobile (Android)**: Tap "Add to Home Screen" when prompted
+3. **iOS Safari**: Tap Share → "Add to Home Screen"
+4. **Manual Installation**: Use the install prompts in the app
+
+### Offline Features
+- **Cached Content**: Previously viewed articles available offline
+- **Offline Page**: Custom offline experience with retry options
+- **Background Sync**: Automatically sync when connection returns
+- **Local Storage**: User preferences and settings preserved
 
 ## 📦 Installation
 
@@ -115,12 +152,20 @@ The app can be deployed to any platform that supports Next.js:
 Create a `.env.local` file in the root directory:
 
 ```env
+# Agentic Workflow APIs
+TAVILY_API_KEY=your_tavily_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
 # N8n Integration (when implemented)
 N8N_WEBHOOK_URL=your_n8n_webhook_url
 N8N_API_KEY=your_n8n_api_key
 
 # News API (when implemented)
 NEWS_API_KEY=your_news_api_key
+
+# Database Configuration
+DATABASE_URL=your_database_url_here
+JWT_SECRET=your_jwt_secret_here
 ```
 
 ### PWA Configuration
@@ -154,13 +199,39 @@ unpackai/
 ## 🔮 Future Enhancements
 
 ### Planned Features
-- **N8n Integration**: Connect with N8n workflows for automated news aggregation
+- **Enhanced Personalization**: Advanced user preference learning and adaptation
 - **Real-time Updates**: WebSocket connections for live news updates
-- **User Preferences**: Customizable categories and sources
-- **Search Functionality**: Search through news articles
+- **Advanced Search**: Semantic search through aggregated content
 - **Bookmarking**: Save articles for later reading
 - **Push Notifications**: Get notified of breaking AI news
 - **Offline Reading**: Cache articles for offline access
+- **Content Recommendations**: AI-powered article recommendations
+- **User Analytics**: Track reading patterns and engagement metrics
+
+### Agentic Workflow Architecture
+The app features a sophisticated agentic workflow system:
+
+#### 🔍 Search Strategy
+- **Multi-source Intelligence**: Searches across research papers (ArXiv), news sites (TechCrunch, The Verge), and community sources (Reddit, Hacker News)
+- **Intelligent Query Generation**: Creates personalized search queries based on user preferences and current AI trends
+- **Parallel Processing**: Executes multiple searches simultaneously for comprehensive coverage
+
+#### 🧠 AI Analysis Pipeline
+- **Content Analysis**: Uses OpenAI to evaluate relevance, credibility, recency, and engagement
+- **Smart Categorization**: Automatically categorizes content (AI Research, Industry News, Product Updates)
+- **Trending Detection**: Identifies viral and trending content
+- **Quality Scoring**: Ranks content based on multiple factors
+
+#### 👤 Personalization Engine
+- **User Preference Learning**: Adapts to user interests, reading level, and preferred sources
+- **Content Filtering**: Excludes topics user doesn't want to see
+- **Reading Level Adaptation**: Adjusts content complexity based on user expertise
+- **Source Prioritization**: Favors user's preferred news sources
+
+#### 📄 Smart Summarization
+- **Adaptive Summaries**: Generates summaries based on user's reading level (beginner, intermediate, advanced)
+- **Key Point Extraction**: Identifies and highlights the most important information
+- **Reading Time Calculation**: Provides accurate time estimates for content consumption
 
 ### N8n Workflow Integration
 The app is designed to work seamlessly with N8n workflows:

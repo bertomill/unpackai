@@ -27,17 +27,17 @@ export function UserMenu() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <div className="h-8 w-8 rounded-full notion-gradient flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
+        <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+          <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full notion-gradient flex items-center justify-center">
+              <span className="text-white font-medium text-xs sm:text-sm">
                 {user.name.charAt(0).toUpperCase()}
               </span>
             </div>
           </Avatar>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md mx-4">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
